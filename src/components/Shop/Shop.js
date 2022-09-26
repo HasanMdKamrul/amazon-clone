@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Cart from '../Cart/Cart';
 import Products from '../Products/Products';
-import { setLsData } from '../utilities/manageDb';
+import { getDataFromLs, setLsData } from '../utilities/manageDb';
 
 
 const Shop = () => {
@@ -12,7 +12,18 @@ const Shop = () => {
     // ** Handle add to cart
 
     const handleAddToCart = (product)=>{
-        const newCart = [...cart,product];
+        const existedProductInCart = cart.find(productCart => productCart.id === product.id);
+        let newCart = [];
+        if (!existedProductInCart) {
+            product.quantity = 1;
+            newCart = [...cart,product];
+        } else{
+            const rest = cart.filter(productCart => productCart.id !== product.id);
+            existedProductInCart.quantity = existedProductInCart.quantity + 1;
+            newCart = [...rest,existedProductInCart];
+        }
+
+       
         setCart(newCart);
 
         // ** set data to ls
@@ -34,7 +45,29 @@ const Shop = () => {
         };
 
         loadProducts()
-    },[])
+    },[]);
+
+    // ** Bring the data from localStorage and show
+
+    useEffect(()=>{
+        // ** get data
+        const storedCart = getDataFromLs();
+
+        const cartFromLs = [];
+        
+        for (const id in storedCart) {
+            const addedToLsProducts = products.find(product => product.id === id);
+
+            if (addedToLsProducts) {
+                addedToLsProducts.quantity = storedCart[id];
+                cartFromLs.push(addedToLsProducts);
+            }
+        };
+
+        setCart(cartFromLs);
+
+    },[products])
+
  
     return (
         <div className="grid grid-cols-12">
